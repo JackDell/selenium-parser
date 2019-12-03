@@ -1,0 +1,118 @@
+<div class="container-fluid">
+  <div class="row outreach-header">
+    <h2>{{ 'registration.registrations.title' | translate}}</h2>
+    <div class="button-container">
+
+      <!-- Terms -->
+      <div ngbDropdown>
+        <!-- THE ACTUAL BUTTON TO OPEN THE DROPDOWN -->
+        <button id="tpl-filter-term-sclick" name="tpl-filter-term" class="btn tpl-filter" ngbDropdownToggle [disabled]="disableFilter">
+          <span>
+            {{'common.term'| translate}}: {{getFilterSelection('term')}}
+          </span>
+        </button>
+        <!-- /THE ACTUAL BUTTON TO OPEN THE DROPDOWN -->
+        <!-- DROPDOWN CONTENT -->
+        <div ngbDropdownMenu class="custom-ngb-dropdown-menu term">
+          <button (click)="pageService.updateFilter('','term')" NgbDropdownItem class="dropdown-item" value="">
+            {{'common.all' | translate}}
+          </button>
+          <ng-container *ngFor="let term of pageService._terms">
+            <button (click)="pageService.updateFilter(term,'term')" NgbDropdownItem class="dropdown-item"
+              value="{{term}}">
+              {{term}}
+            </button>
+          </ng-container>
+        </div>
+        <!-- /DROPDOWN CONTENT -->
+      </div>
+      <!-- Programs -->
+      <div ngbDropdown>
+        <!-- THE ACTUAL BUTTON TO OPEN THE DROPDOWN -->
+        <button id="tpl-filter-program-sclick" name="tpl-filter-program" class="btn tpl-filter" ngbDropdownToggle [disabled]="disableFilter">
+          <span>
+            {{'common.program'| translate}}: {{getFilterSelection('program')}}
+          </span>
+        </button>
+        <!-- /THE ACTUAL BUTTON TO OPEN THE DROPDOWN -->
+        <!-- DROPDOWN CONTENT -->
+        <div ngbDropdownMenu class="custom-ngb-dropdown-menu program">
+          <button (click)="pageService.updateFilter('','program')" NgbDropdownItem class="dropdown-item" value="">
+            {{'common.all' | translate}}
+          </button>
+          <ng-container *ngFor="let program of pageService._programs">
+            <button (click)="pageService.updateFilter(program,'program')" NgbDropdownItem class="dropdown-item"
+              value="{{program}}">
+              {{program}}
+            </button>
+          </ng-container>
+        </div>
+        <!-- /DROPDOWN CONTENT -->
+      </div>
+      <!-- Location -->
+      <div ngbDropdown>
+        <!-- THE ACTUAL BUTTON TO OPEN THE DROPDOWN -->
+        <button id="tpl-filter-location-sclick" name="tpl-filter-location" class="btn tpl-filter" ngbDropdownToggle [disabled]="disableFilter">
+          <span>
+            {{'common.location'| translate}}: {{getFilterSelection('location')}}
+          </span>
+        </button>
+        <!-- /THE ACTUAL BUTTON TO OPEN THE DROPDOWN -->
+        <!-- DROPDOWN CONTENT -->
+        <div ngbDropdownMenu class="custom-ngb-dropdown-menu location">
+          <button (click)="pageService.updateFilter('','location')" NgbDropdownItem class="dropdown-item" value="">
+            {{'common.all' | translate}}
+          </button>
+          <ng-container *ngFor="let location of pageService._locations">
+            <button (click)="pageService.updateFilter(location,'location')" NgbDropdownItem class="dropdown-item"
+              value="{{location}}">
+              {{location}}
+            </button>
+          </ng-container>
+        </div>
+        <!-- /DROPDOWN CONTENT -->
+      </div>
+      <!-- Language -->
+      <div ngbDropdown>
+        <!-- THE ACTUAL BUTTON TO OPEN THE DROPDOWN -->
+        <button id="tpl-filter-language-sclick" name="tpl-filter-language" class="btn tpl-filter" ngbDropdownToggle [disabled]="disableFilter">
+          <span>
+            {{'common.language'| translate}}: {{getFilterSelection('language')}}
+          </span>
+        </button>
+        <!-- /THE ACTUAL BUTTON TO OPEN THE DROPDOWN -->
+        <!-- DROPDOWN CONTENT -->
+        <div ngbDropdownMenu class="custom-ngb-dropdown-menu language">
+          <button (click)="pageService.updateFilter('','language')" NgbDropdownItem class="dropdown-item" value="">
+            {{'common.all' | translate}}
+          </button>
+          <ng-container *ngFor="let language of pageService._languages">
+            <button (click)="pageService.updateFilter(language,'language')" NgbDropdownItem class="dropdown-item"
+              value="{{language}}">
+              {{language}}
+            </button>
+          </ng-container>
+        </div>
+        <!-- /DROPDOWN CONTENT -->
+      </div>
+    </div>
+    <button id="auto-assign-btn-sclick" class="btn btn-primary" (click)="pageService.registrationAutoAssign()" *ngIf="canEdit">
+      {{'registration.registrations.auto_assign' | translate}}
+    </button>
+    <button id="empty-btn-sclick" class="btn btn-link" (click)="pageService.toggleEmpty()">
+      <i class="far" [ngClass]="{'fa-eye': pageService.showEmpty, 'fa-eye-slash': !pageService.showEmpty}"></i> {{ 'registration.empty' | translate }}
+    </button>
+  </div>
+  <div class="row">
+    <div class="col-12">
+      <app-outreachv2-registrations-filter-bar></app-outreachv2-registrations-filter-bar>
+    </div>
+  </div>
+
+  <div class="row s-tables-container">
+    <div class="col-12 s-table-container" *ngFor="let schedule of pageService.schedules; let i=index">
+      <app-outreachv2-registrations-table [permissions]="permissions" [scheduleInfo]="schedule"></app-outreachv2-registrations-table>
+    </div>
+
+  </div>
+</div>
