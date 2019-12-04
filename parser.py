@@ -1,9 +1,9 @@
 import os
-from match import Match
 from formatters import *
+from helper import getOutputDirectory, INDENT, INSTRUCTIONS
+from match import Match
+from component import Component
 from bs4 import BeautifulSoup
-
-INSTRUCTIONS = ['sclick', 'sinput']
 
 # Takes a document of type .html and breaks it into individual lines
 # each line is added to a list as a string and then the list is returned
@@ -13,89 +13,59 @@ def getHtmlAsLines(html_doc):
     return pretty.split('\n')
 
 # Creates returns a list of match objects
-def getMatches(html_doc):
+def getMatches(html_lines):
     matches = []
-    for line in getHtmlAsLines(html_doc):
+    for line in html_lines:
         if ('id=' not in line) and ('id =' not in line):
             continue
         
         before, value = line.split('id')
         _, value, _ = value.split('"', 2)
-
-        instructions = getInstructions(value)
-        if instructions == []:
-            continue
-
         _, tag = before.split('<', 1)
         tag, _ = tag.split(' ', 1)
         tag = tag.replace(' ', '')
             
-        matches.append(Match(value, tag, instructions))    
+        match = Match(value, tag)
+
+        if match.instructions != []:
+            matches.append(match)
     return matches
 
-def getInstructions(id):
-    found = []
-    for instruction in INSTRUCTIONS:
-        if instruction in id:
-            found.append(instruction)
-    return found
+def strip_keywords(file_name, component):
+    lines = getHtmlAsLines(file_name)
+    new_lines = []
+    first = True
+    for line in lines:
+        if first:
+            first = False
+            continue
 
-def getFunctions(match):
-    formatter = getFunctionFormatter(match)
-    templates = []
+        for instruction in INSTRUCTIONS:
+            line = line.replace('-' + instruction, '')
+    
+        before, after = line.split('<', 1)
+        before = before.replace(' ', '  ')
+        new_lines.append(before + '<' + after)
 
-    for instruction in match.instructions:
-        templates.append(formatter[instruction])
-    return templates
+        directory = getOutputDirectory(component)
+        path = os.path.join(directory, file_name)
 
-def getOutputDirectory(parent):
-    directory = 'output/%s' % parent
-    if not os.path.exists(directory):
-        os.mkdir(directory)
-    return directory
-
-def createPage(matches, parent):
-    page_formatter = getPageFormatter(parent)
-    directory = getOutputDirectory(parent)
-    new_page_path = os.path.join(directory, '%s.rb' % parent)
-    page = open(new_page_path, 'w')
-    indent = ' ' * 4
-
-    for line in page_formatter['header']:
-        page.write(line)
-
-    for match in matches:
-        for func in getFunctions(match):
-            for line in func:
-                page.write(indent + line)
-            page.write('\n\n')
-
-    page.write(page_formatter['footer'])
-    page.close()
-
-def createTestCases(matches, parent):
-    for match in matches:
-        createTestCase(match, parent)
-
-def createTestCase(match, parent):
-    test_case_formatter = getTestCaseFormatter(match, parent)
-    file_name_formatter = getFileNameFormatter(match)
-    directory = getOutputDirectory(parent)
-
-    for instruction in match.instructions:
-        test_case = test_case_formatter[instruction]
-        file_name = file_name_formatter[instruction]
-        new_file_path = os.path.join(directory, file_name)
-
-        with open(new_file_path, 'w') as file:
-            for line in test_case:
-                file.write(line)
+        with open(path, 'w') as file:
+            for line in new_lines:
+                file.write(line + '\n')
             file.close()
 
-def processMatches(matches):
-    parent = "SamplePage2"
-    createPage(matches, parent)
-    createTestCases(matches, parent)
+def getComponentInfo(lines):
+    _, name, _, component_type, _  = lines[0].split('"')
+    return name, component_type
 
+def main():
+    file_name = 'example.html'
+    lines = getHtmlAsLines(file_name)
+    matches = getMatches(lines)
+    name, component_type = getComponentInfo(lines)
+    component = Component(name, component_type, matches)
+    component.rubify()
+    strip_keywords(file_name, component)
 
-processMatches(getMatches('example2.html'))
+main()
