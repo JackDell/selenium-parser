@@ -1,35 +1,18 @@
 import os
+from match import Match
+from formatters import *
 from bs4 import BeautifulSoup
 
 INSTRUCTIONS = ['sclick', 'sinput']
 
-class Match:
-    def __init__(self, id, tag, instructions):
-        self.id = id
-        self.tag = tag
-        self.instructions = instructions
-    
-    def getStrippedId(self):
-        stripped_id = self.id
-        for instruction in self.instructions:
-            stripped_id = stripped_id.replace('-' + instruction, '')
-            if '-' in stripped_id:
-                temp = ''
-                names = stripped_id.split('-')
-                for name in names:
-                    temp += name.capitalize()
-                stripped_id = temp
-            else:
-                stripped_id.capitalize()
-        return stripped_id
-    
-
-
+# Takes a document of type .html and breaks it into individual lines
+# each line is added to a list as a string and then the list is returned
 def getHtmlAsLines(html_doc):
     soup = BeautifulSoup(open(html_doc, 'r'), 'html.parser')
     pretty = soup.prettify()
     return pretty.split('\n')
 
+# Creates returns a list of match objects
 def getMatches(html_doc):
     matches = []
     for line in getHtmlAsLines(html_doc):
@@ -57,36 +40,62 @@ def getInstructions(id):
             found.append(instruction)
     return found
 
-def getTemplates(match):
-    formatter = {
-        'sclick' : ['def click%s()\n' % match.getStrippedId(),
-                    '\tputs \'CLICKING %s\'\n' % match.getStrippedId(),
-                    '\t@driver.findById(\'%s\').click\n' % match.id,
-                    'end'],
-        'sinput' : ['def inputTo%s(content)\n' % match.getStrippedId(),
-                    '\tputs \'INPUTTING %%s TO %s\' %% content\n' % match.getStrippedId(),
-                    '\t@driver.findById(\'%s\').send_keys content\n' % match.id,
-                    'end']
-    }
-
+def getFunctions(match):
+    formatter = getFunctionFormatter(match)
     templates = []
+
     for instruction in match.instructions:
         templates.append(formatter[instruction])
     return templates
 
-def processMatches(matches):
-    raw_data = []
-    for match in matches:
-        raw_data.append(getTemplates(match))
-    
-    new_file_path = os.path.join('output', 'test.rb')
+def getOutputDirectory(parent):
+    directory = 'output/%s' % parent
+    if not os.path.exists(directory):
+        os.mkdir(directory)
+    return directory
 
-    with open(new_file_path, 'w') as newFile:
-        for data in raw_data:
-            for func in data:
-                for line in func:
-                    newFile.write(line)
-                newFile.write('\n\n')
-        newFile.close()
+def createPage(matches, parent):
+    page_formatter = getPageFormatter(parent)
+    directory = getOutputDirectory(parent)
+    new_page_path = os.path.join(directory, '%s.rb' % parent)
+    page = open(new_page_path, 'w')
+    indent = ' ' * 4
+
+    for line in page_formatter['header']:
+        page.write(line)
+
+    for match in matches:
+        for func in getFunctions(match):
+            for line in func:
+                page.write(indent + line)
+            page.write('\n\n')
+
+    page.write(page_formatter['footer'])
+    page.close()
+
+def createTestCases(matches, parent):
+    for match in matches:
+        createTestCase(match, parent)
+
+def createTestCase(match, parent):
+    test_case_formatter = getTestCaseFormatter(match, parent)
+    file_name_formatter = getFileNameFormatter(match)
+    directory = getOutputDirectory(parent)
+
+    for instruction in match.instructions:
+        test_case = test_case_formatter[instruction]
+        file_name = file_name_formatter[instruction]
+        new_file_path = os.path.join(directory, file_name)
+
+        with open(new_file_path, 'w') as file:
+            for line in test_case:
+                file.write(line)
+            file.close()
+
+def processMatches(matches):
+    parent = "SamplePage2"
+    createPage(matches, parent)
+    createTestCases(matches, parent)
+
 
 processMatches(getMatches('example2.html'))
